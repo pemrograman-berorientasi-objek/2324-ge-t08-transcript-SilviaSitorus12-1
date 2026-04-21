@@ -1,73 +1,73 @@
 package academic.model;
-
 /**
  * @author 12S24004 Silvia Eklesiana Sitorus
  */
-
 public class Enrollment {
-    private String code;
-    private String id;
-    private String academicYear;
-    private String semester;
-    public String grade;
-    public String remedi;
-    public int sumRemedi;
-    public String newGrade;
+    private final String ids;
+    private final String nims;
+    private final String year;
+    private final String sems;
+    private String grade;
+    private String gradelama;
+    private String info = "no";
+    private int counter = 0;
 
-    public Enrollment(String code, String id, String academicYear, String semester, String grade,
-            String remedi, int sumRemedi, String newGrade) {
-        this.code = code;
-        this.id = id;
-        this.academicYear = academicYear;
-        this.semester = semester;
-        this.grade = grade;
-        this.remedi = remedi;
-        this.sumRemedi = sumRemedi;
-        this.newGrade = newGrade;
+    public Enrollment(String _ids, String _nims, String _year, String _sems, String _grade) {
+        this.ids = _ids;
+        this.nims = _nims;
+        this.year = _year;
+        this.sems = _sems;
+        this.grade = _grade;
+    }
+    public void setgradelama(String gradelama) {
+        this.gradelama = gradelama;
     }
 
-    public String getCode() {
-        return code;
+    public String getids() {
+        return this.ids;
     }
 
-    public String getId() {
-        return id;
+    public String getnims() {
+        return this.nims;
     }
 
-    public String getAcademicYear() {
-        return academicYear;
+    public String getyear() {
+        return this.year;
     }
 
-    public String getSemester() {
-        return semester;
+    public String getsems() {
+        return this.sems;
     }
 
-    public String getGrade() {
-        return grade;
+    public String getgrade() {
+        return this.grade;
     }
 
-    public void setGrade(String grade2) {
-        this.grade = grade2;
+    public void setgrade(String _grade) {
+        this.grade = _grade;
     }
 
-    public double SumGps(String grade) {
-        switch (grade) {
-            case "A":
-                return 4.0;
-            case "AB":
-                return 3.5;
-            case "B":
-                return 3.0;
-            case "BC":
-                return 2.5;
-            case "C":
-                return 2.0;
-            case "D":
-                return 1.0;
-            case "E":
-                return 0.0;
-            default:
-                return 0.0;
+    public void setremedial(String info) {
+        this.info = info;
+    }
+
+    public int getcounter() {
+        return this.counter;
+    }
+
+    public void setcounter() {
+        this.counter++;
+    }
+
+    @Override
+    public String toString() {
+        if (info.equals("ya")) {
+            return this.ids + "|" + this.nims + "|" + this.year + "|" + this.sems + "|" + this.grade + "(" + this.gradelama + ")";
+        } else {
+        return this.ids + "|" + this.nims + "|" + this.year + "|" + this.sems + "|" + this.grade;
         }
     }
+
+
+
 }

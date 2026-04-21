@@ -1,39 +1,34 @@
 package academic.model;
-
 /**
  * @author 12S24004 Silvia Eklesiana Sitorus
  */
+public class Person {
+    protected String id;
+    protected String name;
 
-public class Lecturer extends Person{
-
-    private String initial;
-    private String email;
-
-    public Lecturer(String id, String name, String initial, String email, String studyprogram) {
-        super(id, name, studyprogram);
-        this.initial = initial;
-        this.email = email;
-        this.studyprogram = studyprogram;
+    public Person(String id, String name) {
+        this.id = id;
+        this.name = name;
     }
 
     public String getId() {
         return id;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
 
-    public String getInitial() {
-        return initial;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public String getEmail() {
-        return email;
+    @Override
+    public String toString() {
+        return this.id + "|" + this.name;
     }
-
-    public String getStudyProgram() {
-        return studyprogram;
-    }
-
 }

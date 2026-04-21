@@ -1,368 +1,570 @@
 package academic.driver;
-
+/**
+ * @author 12S24004 Silvia Eklesiana Sitorus
+ */
 import academic.model.Course;
 import academic.model.CourseOpening;
 import academic.model.Enrollment;
 import academic.model.Lecturer;
 import academic.model.Student;
-import academic.model.Students_detail;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
-import java.util.Locale;
-
-/**
- * @author 12S24004 Silvia Eklesiana Sitorus
- */
-
 public class Driver1 {
-
-    private class EnrollmentFormatter {
-        private Enrollment enrollment;
-
-        public EnrollmentFormatter(Enrollment enrollment) {
-            this.enrollment = enrollment;
+    
+    public class TranscriptProcessor {
+        private String studentId;
+        
+        public TranscriptProcessor(String studentId) {
+            this.studentId = studentId;
         }
-
-
-        public String getFormattedString() {
-            String output = enrollment.getCode() + "|" + enrollment.getId() + "|" +
-                           enrollment.getAcademicYear() + "|" + enrollment.getSemester() + "|";
-            if (enrollment.newGrade != null) {
-                output += enrollment.newGrade + "(" + enrollment.getGrade() + ")";
-            } else {
-                output += enrollment.getGrade();
-            }
-            return output;
-        }
-
-      
-        public boolean isValidEnrollment() {
-            return !enrollment.getGrade().equals("None") || enrollment.newGrade != null;
-        }
-    }
-
-    public static void main(String[] args) {
-        List<Course> courses = new ArrayList<>();
-        List<Lecturer> lecturers = new ArrayList<>();
-        List<Student> students = new ArrayList<>();
-        List<CourseOpening> courseOpenings = new ArrayList<>();
-        List<Enrollment> enrollments = new ArrayList<>();
-        List<Students_detail> studentDetails = new ArrayList<>();
-        List<String> detailsAndTranscriptBuffer = new ArrayList<>();
-        List<Enrollment> enrollmentSummary = new ArrayList<>();
-        List<String> lecturerBuffer = new ArrayList<>();
-        List<String> courseBuffer = new ArrayList<>();
-        List<String> studentBuffer = new ArrayList<>();
-        Scanner scanner = new Scanner(System.in);
-
-        while (scanner.hasNextLine()) {
-            String input = scanner.nextLine();
-            if (input.equals("---")) {
-      
-                enrollmentSummary.sort((e1, e2) -> {
-                    int semesterCompare = compareSemester(e1.getSemester(), e2.getSemester());
-                    if (semesterCompare != 0) return semesterCompare;
-                    int yearCompare = e1.getAcademicYear().compareTo(e2.getAcademicYear());
-                    if (yearCompare != 0) return yearCompare;
-                    int codeCompare = e1.getCode().compareTo(e2.getCode());
-                    if (codeCompare != 0) return codeCompare;
-                    return e1.getId().compareTo(e2.getId());
-                });
-
-       
-                for (String output : detailsAndTranscriptBuffer) {
-                    System.out.println(output);
-                }
-     
-                for (String output : lecturerBuffer) {
-                    System.out.println(output);
-                }
-                courseBuffer.sort(String::compareTo);
-                for (String output : courseBuffer) {
-                    System.out.println(output);
-                }
-                for (String output : studentBuffer) {
-                    System.out.println(output);
-                }
-       
-                for (Enrollment e : enrollmentSummary) {
-                    EnrollmentFormatter formatter = new Driver1().new EnrollmentFormatter(e);
-         
-                    if (formatter.isValidEnrollment()) {
-                        String output = e.getCode() + "|" + e.getId() + "|" +
-                                       e.getAcademicYear() + "|" + e.getSemester() + "|";
-                        if (e.newGrade != null) {
-                            output += e.newGrade + "(" + e.getGrade() + ")";
-                        } else {
-                            output += e.getGrade();
-                        }
-                        System.out.println(output);
-                    }
-                }
-                break;
-            }
-
-            String[] parts = input.split("#");
-            String command = parts[0];
-
-            switch (command) {
-                case "lecturer-add":
-                    Lecturer lecturer = new Lecturer(parts[1], parts[2], parts[3], parts[4], parts[5]);
-                    lecturers.add(lecturer);
-                    lecturerBuffer.add(lecturer.getId() + "|" + lecturer.getName() + "|" +
-                                      lecturer.getInitial() + "|" + lecturer.getEmail() + "|" +
-                                      lecturer.getStudyProgram());
-                    break;
-                case "course-add":
-                    Course course = new Course(parts[1], parts[2], Integer.parseInt(parts[3]), parts[4]);
-                    courses.add(course);
-                    courseBuffer.add(course.getCode() + "|" + course.getName() + "|" +
-                                    course.getCredits() + "|" + course.getPassingGrade());
-                    break;
-                case "student-add":
-                    Student student = new Student(parts[1], parts[2], parts[3], parts[4]);
-                    students.add(student);
-                    studentBuffer.add(student.getId() + "|" + student.getName() + "|" +
-                                     student.getYear() + "|" + student.getStudyProgram());
-                    break;
-                case "course-open":
-                    Course targetCourse = null;
-                    for (Course c : courses) {
-                        if (c.getCode().equals(parts[1])) {
-                            targetCourse = c;
-                            break;
-                        }
-                    }
-                    if (targetCourse != null) {
-                        CourseOpening opening = new CourseOpening(
-                                parts[1], targetCourse.getName(), targetCourse.getCredits(),
-                                targetCourse.getPassingGrade(), parts[2], parts[3], parts[4],
-                                new Lecturer[0], parts[4], "");
-                        courseOpenings.add(opening);
-                    }
-                    break;
-                case "enrollment-add":
-                    Enrollment enrollment = new Enrollment(parts[1], parts[2], parts[3], parts[4],
-                                                          "None", null, 0, null);
-                    enrollments.add(enrollment);
-                    break;
-                case "enrollment-grade":
-                    for (Enrollment e : enrollments) {
-                        if (e.getCode().equals(parts[1]) && e.getId().equals(parts[2]) &&
-                            e.getAcademicYear().equals(parts[3]) && e.getSemester().equals(parts[4])) {
-                            e.setGrade(parts[5]);
-                            updateEnrollmentSummary(enrollmentSummary, e);
-                            break;
-                        }
-                    }
-                    break;
-                case "enrollment-remedial":
-                    for (Enrollment e : enrollments) {
-                        if (e.getCode().equals(parts[1]) && e.getId().equals(parts[2]) &&
-                            e.getAcademicYear().equals(parts[3]) && e.getSemester().equals(parts[4])) {
-                            String previousGrade = e.getGrade();
-                            e.remedi = parts[5];
-                            e.newGrade = parts[5];
-                            e.sumRemedi = e.sumRemedi + 1;
-                            e.setGrade(previousGrade);
-                            updateEnrollmentSummary(enrollmentSummary, e);
-                            break;
-                        }
-                    }
-                    break;
-                case "student-details":
-                    String detailStudentId = parts[1];
-                    for (Student s : students) {
-                        if (s.getId().equals(detailStudentId)) {
-                            double totalGradePoints = 0.0;
-                            int totalCredits = 0;
-                            Map<String, Enrollment> latestEnrollmentsDetail = new HashMap<>();
-                            for (Enrollment e : enrollments) {
-                                if (e.getId().equals(detailStudentId)) {
-                                    String key = e.getCode();
-                                    Enrollment existing = latestEnrollmentsDetail.get(key);
-                                    if (existing == null || isLater(e, existing)) {
-                                        latestEnrollmentsDetail.put(key, e);
-                                    }
-                                }
+        
+        public void printTranscript(ArrayList<Student> studentList, ArrayList<Enrollment> enrollList, ArrayList<Course> courseList) {
+            String output = "";
+            Boolean cekstudent = false;
+            Boolean printed = false;
+            Double index = 0.0;
+            Double total = 0.0;
+            Double jumlah = 0.0;
+            Double jumlahs = 0.0;
+            int jumlah1 = 0;
+            
+            for (Student p : studentList) {
+                if (p.getId().contains(studentId)) {
+                    cekstudent = true;
+                    
+                    ArrayList<Enrollment> latestEnrollments = Driver1.getLatestEnrollments(enrollList, studentId);
+                    
+                    boolean grades = false;
+                    total = 0.0;
+                    jumlahs = 0.0;
+                    
+                    for (Enrollment e : latestEnrollments) {
+                        if (!e.getgrade().equals("None")) {
+                            grades = true;
+                            
+                            switch (e.getgrade()) {
+                                case "A":
+                                    index = 4.0;
+                                    break;
+                                case "AB":
+                                    index = 3.5;
+                                    break;
+                                case "B":
+                                    index = 3.0;
+                                    break;
+                                case "BC":
+                                    index = 2.5;
+                                    break;
+                                case "C":
+                                    index = 2.0;
+                                    break;
+                                case "D":
+                                    index = 1.5;
+                                    break;
+                                case "E":
+                                    index = 1.0;
+                                    break;
+                                default:
+                                    index = 0.0;
+                                    break;
                             }
-                            for (Enrollment e : latestEnrollmentsDetail.values()) {
-                                for (Course c : courses) {
-                                    if (c.getCode().equals(e.getCode())) {
-                                        String finalGrade = e.newGrade != null ? e.newGrade : e.getGrade();
-                                        if (!finalGrade.equals("None")) {
-                                            totalGradePoints += e.SumGps(finalGrade) * c.getCredits();
-                                            totalCredits += c.getCredits();
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                            float gpa = totalCredits > 0 ? (float) (totalGradePoints / totalCredits) : 0.0f;
-                            Students_detail detail = new Students_detail(s.getId(), s.getName(),
-                                                                        Integer.parseInt(s.getYear()), s.getStudyProgram(), gpa, totalCredits);
-                            studentDetails.add(detail);
-                            detailsAndTranscriptBuffer.add(String.format(Locale.US, "%s|%s|%d|%s|%.2f|%d",
-                                                                        detail.getId(), detail.getName(), detail.getYear(),
-                                                                        detail.getMajor(), detail.getGpa(), detail.getcredit()));
-                            break;
-                        }
-                    }
-                    break;
-                case "course-history":
-                    String code = parts[1];
-                    for (Course c : courses) {
-                        if (c.getCode().equals(code)) {
-                            List<CourseOpening> openings = new ArrayList<>();
-                            for (CourseOpening co : courseOpenings) {
-                                if (co.getCode().equals(code)) {
-                                    openings.add(co);
-                                }
-                            }
-                            openings.sort((o1, o2) -> {
-                                String key1 = o1.getAcademicYear() + "|" + o1.getSemester();
-                                String key2 = o2.getAcademicYear() + "|" + o2.getSemester();
-                                int order1 = getCustomOrder(key1);
-                                int order2 = getCustomOrder(key2);
-                                return Integer.compare(order1, order2);
-                            });
-                            for (CourseOpening co : openings) {
-                                String lecturerInitials = co.getLecturerInitial();
-                                String lecturerEmail = "";
-                                for (Lecturer l : lecturers) {
-                                    if (l.getInitial().equals(lecturerInitials)) {
-                                        lecturerEmail = l.getEmail();
-                                        break;
-                                    }
-                                }
-                                detailsAndTranscriptBuffer.add(String.format(
-                                        "%s|%s|%d|%s|%s|%s|%s (%s)",
-                                        c.getCode(), c.getName(), c.getCredits(), c.getPassingGrade(),
-                                        co.getAcademicYear(), co.getSemester(),
-                                        lecturerInitials, lecturerEmail));
-                                List<Enrollment> courseEnrollments = new ArrayList<>();
-                                for (Enrollment e : enrollments) {
-                                    if (e.getCode().equals(code) &&
-                                        e.getAcademicYear().equals(co.getAcademicYear()) &&
-                                        e.getSemester().equals(co.getSemester()) &&
-                                        !e.getGrade().equals("None")) {
-                                        courseEnrollments.add(e);
-                                    }
-                                }
-                                courseEnrollments.sort((e1, e2) -> e1.getId().compareTo(e2.getId()));
-                                for (Enrollment e : courseEnrollments) {
-                                    String gradeOutput = e.newGrade != null ? e.newGrade + "(" + e.getGrade() + ")" : e.getGrade();
-                                    detailsAndTranscriptBuffer.add(String.format(
-                                            "%s|%s|%s|%s|%s",
-                                            e.getCode(), e.getId(), e.getAcademicYear(), e.getSemester(), gradeOutput));
-                                }
-                            }
-                            break;
-                        }
-                    }
-                    break;
-                case "student-transcript":
-                    String transcriptStudentId = parts[1];
-                    Student targetStudent = null;
-                    for (Student s : students) {
-                        if (s.getId().equals(transcriptStudentId)) {
-                            targetStudent = s;
-                            break;
-                        }
-                    }
-                    if (targetStudent == null) break;
-
-                    double totalGradePoints = 0.0;
-                    int totalCredits = 0;
-                    Map<String, Enrollment> latestEnrollments = new HashMap<>();
-                    for (Enrollment e : enrollments) {
-                        if (e.getId().equals(transcriptStudentId)) {
-                            String key = e.getCode();
-                            Enrollment existing = latestEnrollments.get(key);
-                            if (existing == null || isLater(e, existing)) {
-                                latestEnrollments.put(key, e);
-                            }
-                        }
-                    }
-
-                    List<Enrollment> sortedEnrollments = new ArrayList<>();
-                    for (Enrollment e : latestEnrollments.values()) {
-                        String finalGrade = e.newGrade != null ? e.newGrade : e.getGrade();
-                        if (!finalGrade.equals("None")) {
-                            sortedEnrollments.add(e);
-                            for (Course c : courses) {
-                                if (c.getCode().equals(e.getCode())) {
-                                    totalGradePoints += e.SumGps(finalGrade) * c.getCredits();
-                                    totalCredits += c.getCredits();
+                            
+                            for (Course a : courseList) {
+                                if (e.getids().contains(a.getid())) {
+                                    jumlah = Double.valueOf(a.getsks());
+                                    jumlahs = jumlahs + jumlah;
+                                    total = total + (jumlah * index);
                                     break;
                                 }
                             }
                         }
                     }
-
-                    float transcriptGpa = totalCredits > 0 ? (float) (totalGradePoints / totalCredits) : 0.0f;
-                    detailsAndTranscriptBuffer.add(String.format(Locale.US, "%s|%s|%d|%s|%.2f|%d",
-                                                                targetStudent.getId(), targetStudent.getName(),
-                                                                Integer.parseInt(targetStudent.getYear()),
-                                                                targetStudent.getStudyProgram(), transcriptGpa, totalCredits));
-
-                    sortedEnrollments.sort((e1, e2) -> {
-                        int codeCompare = e1.getCode().compareTo(e2.getCode());
-                        if (codeCompare != 0) return codeCompare;
-                        int semesterCompare = compareSemester(e1.getSemester(), e2.getSemester());
-                        if (semesterCompare != 0) return semesterCompare;
-                        int yearCompare = e1.getAcademicYear().compareTo(e2.getAcademicYear());
-                        if (yearCompare != 0) return yearCompare;
-                        return e1.getId().compareTo(e2.getId());
-                    });
-                    for (Enrollment e : sortedEnrollments) {
-                        String finalGrade = e.newGrade != null ? e.newGrade + "(" + e.getGrade() + ")" : e.getGrade();
-                        detailsAndTranscriptBuffer.add(String.format(
-                                "%s|%s|%s|%s|%s",
-                                e.getCode(), e.getId(), e.getAcademicYear(), e.getSemester(), finalGrade));
+                    
+                    if (!grades) {
+                        total = 0.0;
+                        jumlahs = 0.0;
+                    }
+                    
+                    jumlah1 = jumlahs.intValue();
+                    
+                    if (jumlahs == 0.0) {
+                        output = p.toString() + "|" + "0.00" + "|" + "0";
+                    } else {
+                        output = p.toString() + "|" + String.format("%.2f", total / jumlahs) + "|" + jumlah1;
+                    }
+                    
+                    if (!printed) {
+                        System.out.println(output);
+                        printed = true;
+                    }
+                    
+                    for (Enrollment e : latestEnrollments) {
+                        System.out.println(e.toString());
                     }
                     break;
+                }
             }
         }
-
-        scanner.close();
     }
+    
+    public static void main(String[] _args) {
+        ArrayList<Course> course = new ArrayList<>();
+        ArrayList<Student> student = new ArrayList<>();
+        ArrayList<Enrollment> enrol = new ArrayList<>();
+        ArrayList<Lecturer> lecturer = new ArrayList<>();
+        ArrayList<CourseOpening> courseopen = new ArrayList<>();
+        Scanner input = new Scanner(System.in);
+        String lecturerss[] = new String[100];
+        String temp;
+        String temp1;
 
-    private static void updateEnrollmentSummary(List<Enrollment> summary, Enrollment enrollment) {
-        String key = enrollment.getCode() + "|" + enrollment.getId() + "|" +
-                     enrollment.getAcademicYear() + "|" + enrollment.getSemester();
-        summary.removeIf(e -> (e.getCode() + "|" + e.getId() + "|" +
-                              e.getAcademicYear() + "|" + e.getSemester()).equals(key));
-        if (!enrollment.getGrade().equals("None") || enrollment.newGrade != null) {
-            summary.add(enrollment);
+        //objek course
+        String id;
+        String matkul;
+        String sks;
+        String nilai;
+        String dosens;
+
+        //objek student
+        String nim;
+        String nama;
+        String tahun;
+        String prodi;
+
+        //objek enroll
+        String ids;
+        String nims;
+        String year;
+        String sems;
+        String grade = "None";
+
+        //objek lecturer
+        String nidn;
+        String nama_dosen;
+        String inisial;
+        String email;
+        String prodi_dosen;
+        
+        //objek enrollgrade
+        String ids_;
+        String nims_;
+        String year_;
+        String sems_;
+        String grade_;
+        
+        //objek details
+        String nims1;
+        
+        boolean courseprinted = false;
+        boolean studentprinted = false;
+
+        //objek remedial
+        String courseid;
+        String studentid;
+        String courseyear;
+        String coursesems;
+        String coursegrade;
+        
+        //objek courseopen
+        String idcourse;
+        String yearcourse;
+        String semscourse;
+
+        //objek coursehistory
+        String idcoursehistory;
+
+        //objek studenttranscript
+        String idtranscriptstudent;
+
+        int z = 0;
+
+        while (true) {
+            temp = input.nextLine();
+            if (temp.equals("---")) {
+                break;
+            }
+            String[] hasil = temp.split("#");
+            temp1 = hasil[0];
+            if (temp1.equals("course-add")) {
+                id = hasil[1];
+                matkul = hasil[2];
+                sks = hasil[3];
+                nilai = hasil[4];
+
+                course.add(new Course(id, matkul, sks, nilai));
+                
+            } else if (temp1.equals("student-add")) {
+                nim = hasil[1];
+                nama = hasil[2];
+                tahun = hasil[3];
+                prodi = hasil[4];
+                
+                boolean ada = false;
+                for (Student s : student) {
+                    if (s.getId().contains(nim)) {
+                        ada = true;
+                    }
+                }
+                if (!ada) {
+                    student.add(new Student(nim, nama, tahun, prodi));
+                }
+            } else if (temp1.equals("enrollment-add")) {
+                ids = hasil[1];
+                nims = hasil[2];
+                year = hasil[3];
+                sems = hasil[4];
+                
+                boolean courseada = false;
+                boolean studentada = false;
+                for (Course courses : course) {
+                    if (ids.contains(courses.getid())) {
+                        courseada = true;
+                    }
+                }
+                
+                for (Student students : student) {
+                    if (nims.contains(students.getId())) {
+                        studentada = true;
+                    }
+                }
+                
+                boolean sudahAda = false;
+                for (Enrollment e : enrol) {
+                    if (e.getids().equals(ids) && e.getnims().equals(nims) && e.getyear().equals(year) && e.getsems().equals(sems)) {
+                        sudahAda = true;
+                        break;
+                    }
+                }
+                
+                if (!studentada && !studentprinted) {
+                    System.out.println("invalid student|" + nims);
+                    studentprinted = true;
+                }
+                
+                if (!courseada && !courseprinted) {
+                    System.out.println("invalid course|" + ids);
+                    courseprinted = true;
+                }
+                
+                if (studentada && courseada && !sudahAda) {
+                    enrol.add(new Enrollment(ids, nims, year, sems, grade));
+                }
+            } else if (temp1.equals("enrollment-grade")) {
+                ids_ = hasil[1];
+                nims_ = hasil[2];
+                year_ = hasil[3];
+                sems_ = hasil[4];
+                grade_ = hasil[5];
+                
+                boolean found = false;
+
+                for (Enrollment e : enrol) {
+                    if (e.getids().equals(ids_) && e.getnims().equals(nims_) && 
+                        e.getyear().equals(year_) && e.getsems().equals(sems_)) {
+                        e.setgrade(grade_);
+                        found = true;
+                        break;
+                    }
+                }
+                
+                if (!found) {
+                    enrol.add(new Enrollment(ids_, nims_, year_, sems_, grade_));
+                }
+                
+            } else if (temp1.equals("lecturer-add")) {
+                nidn = hasil[1];
+                nama_dosen = hasil[2];
+                inisial = hasil[3];
+                email = hasil[4];
+                prodi_dosen = hasil[5];
+
+                boolean dosen_ada = false;
+                for (Lecturer lecturers : lecturer) {
+                    if (nidn.contains(lecturers.getId())) {
+                        dosen_ada = true;
+                    }
+                }
+                
+                if (!dosen_ada) {
+                    lecturer.add(new Lecturer(nidn, nama_dosen, inisial, email, prodi_dosen));
+                }
+
+            } else if (temp1.equals("student-details")) {
+                String output = "";
+                Boolean cekstudent = false;
+                Boolean printed = false;
+                Double index = 0.0;
+                Double total = 0.0;
+                Double jumlah = 0.0;
+                Double jumlahs = 0.0;
+                int jumlah1 = 0;
+                nims1 = hasil[1];
+                
+                for (Student p : student) {
+                    total = 0.0;
+                    jumlah1 = 0;
+                    if (p.getId().contains(nims1)) {
+                        boolean grades = false;
+
+                        ArrayList<String> coursecek = new ArrayList<>();
+                        for (int i = enrol.size() - 1; i >= 0; i--) {
+                            Enrollment e = enrol.get(i);
+                            if (e.getnims().equals(nims1) && !coursecek.contains(e.getids())) {
+                                coursecek.add(e.getids());
+                                double gradePoint;
+                                
+                                grades = true;
+                                switch (e.getgrade()) {
+                                    case "A":
+                                    index = 4.0;
+                                        break;
+                                        case "AB":
+                                        index = 3.5;
+                                        break;
+                                        case "B":
+                                        index = 3.0;
+                                        break;
+                                        case "BC":
+                                        index = 2.5;
+                                        break;
+                                        case "C":
+                                        index = 2.0;
+                                        break;
+                                        case "D":
+                                        index = 1.5;
+                                        break;
+                                        case "E":
+                                        index = 1.0;
+                                        break;
+                                        default:
+                                        index = 0.0;
+                                        break;
+                                    }
+                                    for (Course a : course) {
+                                    if (e.getids().contains(a.getid())) {
+                                        jumlah = Double.valueOf(a.getsks());
+                                        jumlahs = jumlahs + jumlah;
+                                        total = total + (jumlah * index);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (!grades) {
+                            total = 0.0;
+                            jumlahs = 0.0;
+                        }
+                        
+                        jumlah1 = jumlahs.intValue();
+                        
+                        for (Enrollment e : enrol) {
+                            for (Student q : student) {
+                                if (q.getId().contains(nims1)) {
+                                    if (e.getgrade().equals("None")) {
+                                        output = q.toString() + "|" + "0.00" + "|" + "0";
+                                    } else {
+                                        output = q.toString() + "|" + String.format("%.2f", total / jumlahs) + "|" + jumlah1;
+                                    }
+                                }
+                            }
+                        }
+                        
+                        for (Student s : student) {
+                            if (s.getId().contains(nims1)) {
+                                cekstudent = true;
+                            }
+                        }
+                        if (cekstudent && !printed) {
+                            System.out.println(output);
+                            printed = true;
+                        }
+                    }
+                }
+            } else if (temp1.equals("enrollment-remedial")) {
+                    courseid = hasil[1];
+                    studentid = hasil[2];
+                    courseyear = hasil[3];
+                    coursesems = hasil[4];
+                    coursegrade = hasil[5];
+                    
+                    
+                    for (Enrollment i : enrol) {
+                        if (i.getnims().equals(studentid) && i.getids().equals(courseid) && i.getyear().equals(courseyear) && i.getsems().equals(coursesems)) {
+                            if (!i.getgrade().equals("None") && i.getcounter() == 0) {
+                                i.setgradelama(i.getgrade());
+                                i.setgrade(coursegrade);
+                                i.setremedial("ya");
+                                i.setcounter();
+                            }
+                        }
+                    }
+
+                } else if (temp1.equals("course-open")) {
+                    idcourse = hasil[1];
+                    yearcourse = hasil[2];
+                    semscourse = hasil[3];
+                    dosens = hasil[4];
+                    courseopen.add(new CourseOpening(idcourse, yearcourse, semscourse, dosens));
+
+                    z++;
+                } else if (temp1.equals("course-history")) {
+                    idcoursehistory = hasil[1];
+
+                    Course nowcourse = null;
+                    String lecturerinisial = "";
+                    String lectureremail = "";
+
+                    for (Course s : course) {
+                        if (s.getid().contains(idcoursehistory)) {
+                            nowcourse = s;
+                            break;
+                        }
+                    }
+
+                    ArrayList<CourseOpening> odd = new ArrayList<CourseOpening>();
+                    ArrayList<CourseOpening> even = new ArrayList<CourseOpening>();
+
+                    for (CourseOpening i : courseopen) {
+                        if (i.getid().contains(idcoursehistory)) {
+                            if (i.getsems().contains("odd")) {
+                                odd.add(i);
+                            } else {
+                                even.add(i);
+                            }
+                        }
+                    }
+
+                    for (CourseOpening g : odd) {
+                        lecturerinisial = g.getinisial();
+
+                        for (Lecturer s : lecturer) {
+                            if (s.getinisial().contains(lecturerinisial)) {
+                                lectureremail = s.getemail();
+                                break;
+                            }
+                        }
+                        System.out.println(nowcourse.getid() + "|" + nowcourse.getmatkul() + "|" + nowcourse.getsks() + "|" + nowcourse.getnilai() + "|" + g.getyear() + "|" + g.getsems() + "|" + lecturerinisial + " (" + lectureremail + ")");
+
+                        for (Enrollment s : enrol) {
+                            if (s.getids().contains(idcoursehistory) && s.getyear().contains(g.getyear()) && s.getsems().contains(g.getsems())) {                                    
+                                System.out.println(s.toString());
+                            }
+                        }
+                    }
+
+                    for (CourseOpening h : even) {
+                        lecturerinisial = h.getinisial();
+
+                        for (Lecturer c : lecturer) {
+                            if (c.getinisial().contains(lecturerinisial)) {
+                                lectureremail = c.getemail();
+                                break;
+                            }
+                        }
+                        System.out.println(nowcourse.getid() + "|" + nowcourse.getmatkul() + "|" + nowcourse.getsks() + "|" + nowcourse.getnilai() + "|" + h.getyear() + "|" + h.getsems() + "|" + lecturerinisial + " (" + lectureremail + ")");
+
+                        for (Enrollment s : enrol) {
+                            if (s.getids().contains(idcoursehistory) && s.getyear().contains(h.getyear()) && s.getsems().contains(h.getsems())) {                                    
+                                System.out.println(s.toString());
+                            }
+                        }
+                        }
+                    } else if (temp1.equals("student-transcript")) {
+                    idtranscriptstudent = hasil[1];
+                    
+                    Driver1 driver = new Driver1();
+                    TranscriptProcessor transcriptProcessor = driver.new TranscriptProcessor(idtranscriptstudent);
+                    
+                    transcriptProcessor.printTranscript(student, enrol, course);
+                }
         }
-    }
+            
 
-    private static int compareSemester(String s1, String s2) {
-        if (s1.equals(s2)) return 0;
-        if (s1.equals("odd")) return -1;
-        return 1;
-    }
-
-    private static boolean isLater(Enrollment e1, Enrollment e2) {
-        int yearCompare = e1.getAcademicYear().compareTo(e2.getAcademicYear());
-        if (yearCompare != 0) return yearCompare > 0;
-        return compareSemester(e1.getSemester(), e2.getSemester()) > 0;
-    }
-
-    private static int getCustomOrder(String key) {
-        switch (key) {
-            case "2020/2021|odd":
-                return 1;
-            case "2021/2022|odd":
-                return 2;
-            case "2020/2021|even":
-                return 3;
-            default:
-                return 4;
+        for (Lecturer p : lecturer) {
+            System.out.println(p.toString());
         }
+
+        for (Course a : course) {
+            System.out.println(a.toString());
+        }
+
+        for (Student j : student) {
+            System.out.println(j.toString());
+        }
+
+        for (Enrollment k : enrol) {
+            System.out.println(k.toString());            
+        }
+
+        input.close();
+    }
+
+    public static ArrayList<Enrollment> getLatestEnrollments(ArrayList<Enrollment> enrollList, String studentId) {    
+        ArrayList<String> processedCourses = new ArrayList<>();
+        ArrayList<Enrollment> result = new ArrayList<>();
+        
+        ArrayList<Enrollment> studentEnrollments = new ArrayList<>();
+        for (Enrollment e : enrollList) {
+            if (e.getnims().equals(studentId)) {
+                studentEnrollments.add(e);
+            }
+        }
+        
+        for (int i = 0; i < studentEnrollments.size(); i++) {
+            Enrollment current = studentEnrollments.get(i);
+            String courseId = current.getids();
+            
+            if (!processedCourses.contains(courseId)) {
+                Enrollment latest = current;
+                int latestYear = Integer.parseInt(latest.getyear().split("/")[0]);
+                boolean latestIsEven = latest.getsems().equals("even");
+                
+                for (int j = 0; j < studentEnrollments.size(); j++) {
+                    if (i != j && studentEnrollments.get(j).getids().equals(courseId)) {
+                        Enrollment other = studentEnrollments.get(j);
+                        int otherYear = Integer.parseInt(other.getyear().split("/")[0]);
+                        boolean otherIsEven = other.getsems().equals("even");
+                        
+                        if (otherYear > latestYear) {
+                            latest = other;
+                            latestYear = otherYear;
+                            latestIsEven = otherIsEven;
+                        } 
+                        else if (otherYear == latestYear) {
+                            if (otherIsEven && !latestIsEven) {
+                                latest = other;
+                                latestYear = otherYear;
+                                latestIsEven = otherIsEven;
+                            }
+                        }
+                    }
+                }
+                
+                result.add(latest);
+                processedCourses.add(courseId);
+            }
+        }
+        
+        for (int i = 0; i < result.size(); i++) {
+            for (int j = 0; j < result.size() - 1; j++) {
+                int year1 = Integer.parseInt(result.get(j).getyear().split("/")[0]);
+                int year2 = Integer.parseInt(result.get(j + 1).getyear().split("/")[0]);
+                
+                if (year1 > year2) {
+                    Enrollment temp = result.get(j);
+                    result.set(j, result.get(j + 1));
+                    result.set(j + 1, temp);
+                } else if (year1 == year2) {
+                    if (result.get(j).getsems().equals("even") && 
+                        result.get(j + 1).getsems().equals("odd")) {
+                        Enrollment temp = result.get(j);
+                        result.set(j, result.get(j + 1));
+                        result.set(j + 1, temp);
+                    }
+                }
+            }
+        }
+        
+        return result;
     }
 }

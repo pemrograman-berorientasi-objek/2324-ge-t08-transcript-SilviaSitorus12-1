@@ -1,48 +1,27 @@
 package academic.model;
-
 /**
  * @author 12S24004 Silvia Eklesiana Sitorus
  */
+public class Student extends Person {
+    private final String tahun;
+    private final String prodi;
 
- public class Student extends Person{
-
-    public String year;
-    public double gpa;
-    public int sks;
-
-    public Student(String id, String name, String year, String studyprogram) {
-        super(id, name, studyprogram);
-        this.year = year;
-        this.studyprogram = studyprogram;
-        this.gpa = 0;
-        this.sks = 0;
+    public Student(String _nim, String _nama, String _tahun, String _prodi) {
+        super(_nim, _nama);
+        this.tahun = _tahun;
+        this.prodi = _prodi;
     }
 
-    public String getId() {
-        return id;
+    public String gettahun() {
+        return this.tahun;
     }
 
-    public String getName() {
-        return name;
+    public String getprodi () {
+        return this.prodi;
     }
-
-    public String getYear() {
-        return year;
-    }
-
-    public String getStudyProgram() {
-        return studyprogram;
-    }
-    
-    public void getGpa(double _gpa){
-        this.gpa = _gpa;
-    }
-
-    public void getSks(int _sks){
-        this.sks= _sks;
-    }
-
-    public void toStringDetail(Student Std){
-        System.out.printf("%s|%s|%s|%s|%.2f|%d\n", this.id, this.name, this.year, this.studyprogram, this.gpa, this.sks);
+ 
+    @Override
+    public String toString() {
+        return super.toString() + "|" + this.tahun + "|" + this.prodi;
     }
 }
